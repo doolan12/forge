@@ -2,6 +2,8 @@ package com.doolan.forge
 
 import android.app.Application
 import com.doolan.forge.data.ForgeDatabase
+import com.doolan.forge.data.Reminders
+import kotlinx.coroutines.flow.first
 import com.doolan.forge.data.ProfileStore
 import com.doolan.forge.data.Repository
 import kotlinx.coroutines.CoroutineScope
@@ -19,5 +21,7 @@ class ForgeApp : Application() {
         super.onCreate()
         repo = Repository(this, ForgeDatabase.build(this), ProfileStore(this))
         appScope.launch { repo.seedIfNeeded() }
+        Reminders.ensureChannel(this)
+        appScope.launch { Reminders.schedule(this@ForgeApp, repo.store.reminders.first(), false) }
     }
 }

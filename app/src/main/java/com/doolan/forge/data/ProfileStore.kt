@@ -110,6 +110,25 @@ class ProfileStore(private val context: Context) {
         }
     }
 
+    private val rTrainOn = stringPreferencesKey("rem_train_on")
+    private val rTrainTime = stringPreferencesKey("rem_train_time")
+    private val rCheckOn = stringPreferencesKey("rem_check_on")
+    private val rCheckTime = stringPreferencesKey("rem_check_time")
+
+    val reminders: Flow<ReminderSettings> = context.dataStore.data.map { e ->
+        ReminderSettings(
+            trainOn = e[rTrainOn] == "1", trainTime = e[rTrainTime] ?: "06:00",
+            checkOn = e[rCheckOn] == "1", checkTime = e[rCheckTime] ?: "07:00"
+        )
+    }
+
+    suspend fun saveReminders(s: ReminderSettings) {
+        context.dataStore.edit { e ->
+            e[rTrainOn] = if (s.trainOn) "1" else "0"; e[rTrainTime] = s.trainTime
+            e[rCheckOn] = if (s.checkOn) "1" else "0"; e[rCheckTime] = s.checkTime
+        }
+    }
+
     suspend fun current(): ProfileData = profile.first()
 
     suspend fun save(p: ProfileData) {

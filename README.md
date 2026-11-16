@@ -29,5 +29,8 @@ Chat with a coach that sees only what you have logged. Uses your own Anthropic A
 ## Weather and Health Connect (Stage 8)
 Forecast for planned runs from Open-Meteo (free, no key; only the town you choose is used). The daily check-in can fill sleep and resting heart rate from Android Health Connect when you tap the button; read-only, and you can edit the numbers.
 
+## Reminders (Stage 9)
+Optional daily training reminder (only when a session is planned) and check-in reminder (only if not done). Set in Profile. Works offline; Android may deliver a few minutes late.
+
 ## Not built yet
 reminders, HYROX station time logging, wearable integrations.

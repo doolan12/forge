@@ -142,6 +142,9 @@ fun ProfileScreen(vm: AppViewModel) {
             }
         }
 
+        SectionTitle("Reminders")
+        RemindersSection(vm)
+
         SectionTitle("Backup")
         ForgeCard {
             Text(
