@@ -2,6 +2,8 @@ package com.doolan.forge.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,6 +35,7 @@ import com.doolan.forge.data.Calc
 import com.doolan.forge.data.ExerciseEntity
 import com.doolan.forge.data.SessionEntity
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
     val exercises by vm.exercises.collectAsState()
@@ -60,7 +63,7 @@ fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         ScreenTitle("Training", "Start a session and browse the exercise library")
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Button(onClick = {
                 vm.addSession(SessionEntity(dateEpochDay = Calc.today(), title = "Workout", discipline = "GYM")) { id ->
                     openWorkout(id)

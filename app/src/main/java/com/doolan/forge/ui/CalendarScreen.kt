@@ -5,6 +5,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -40,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.doolan.forge.data.Calc
 import com.doolan.forge.data.SessionEntity
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun CalendarScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
     val profile by vm.profile.collectAsState()
@@ -145,7 +148,7 @@ fun CalendarScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
         }
 
         Gap(12)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             OutlinedButton(onClick = { showPlan = true }) { Text("+ Add session") }
             OutlinedButton(onClick = {
                 vm.addSession(SessionEntity(dateEpochDay = selected, title = "Rest day", discipline = "REST", durationMin = 0))
