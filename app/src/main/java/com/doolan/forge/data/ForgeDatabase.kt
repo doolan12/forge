@@ -18,9 +18,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         ProgrammeEntity::class,
         CheckInEntity::class,
         FoodEntryEntity::class,
-        MeasurementEntity::class
+        MeasurementEntity::class,
+        HyroxResultEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class ForgeDatabase : RoomDatabase() {
@@ -34,12 +35,23 @@ abstract class ForgeDatabase : RoomDatabase() {
     abstract fun checkIns(): CheckInDao
     abstract fun foods(): FoodDao
     abstract fun measurements(): MeasurementDao
+    abstract fun hyrox(): HyroxDao
 
     companion object {
         fun build(context: Context): ForgeDatabase =
             Room.databaseBuilder(context, ForgeDatabase::class.java, "forge.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
+
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS hyrox_results (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, dateEpochDay INTEGER NOT NULL, " +
+                        "division TEXT NOT NULL, kind TEXT NOT NULL, splits TEXT NOT NULL)"
+                )
+            }
+        }
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {

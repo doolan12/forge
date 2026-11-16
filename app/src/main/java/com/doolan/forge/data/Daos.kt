@@ -226,3 +226,21 @@ interface MeasurementDao {
     @Query("SELECT * FROM measurements ORDER BY dateEpochDay, id")
     suspend fun allNow(): List<MeasurementEntity>
 }
+
+@Dao
+interface HyroxDao {
+    @Insert
+    suspend fun insert(e: HyroxResultEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<HyroxResultEntity>)
+
+    @Query("DELETE FROM hyrox_results WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT * FROM hyrox_results ORDER BY dateEpochDay, id")
+    fun all(): Flow<List<HyroxResultEntity>>
+
+    @Query("SELECT * FROM hyrox_results ORDER BY dateEpochDay, id")
+    suspend fun allNow(): List<HyroxResultEntity>
+}

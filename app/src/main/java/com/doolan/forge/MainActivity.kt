@@ -139,7 +139,7 @@ private fun MainNav(vm: AppViewModel, app: ForgeApp) {
         }
     ) { inner ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(inner)) {
-            composable("home") { HomeScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("nutrition") }, { nav.navigate("coach") }) }
+            composable("home") { HomeScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("nutrition") }, { nav.navigate("coach") }, { nav.navigate("hyrox") }) }
             composable("coach") {
                 val cvm: CoachViewModel = viewModel(
                     key = "coach",
@@ -147,6 +147,7 @@ private fun MainNav(vm: AppViewModel, app: ForgeApp) {
                 )
                 CoachScreen(cvm) { nav.popBackStack() }
             }
+            composable("hyrox") { HyroxScreen(vm) { nav.popBackStack() } }
             composable("nutrition") { NutritionScreen(vm) { nav.popBackStack() } }
             composable("training") { TrainingScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("generator") }) }
             composable("generator") {

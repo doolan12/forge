@@ -30,7 +30,7 @@ import com.doolan.forge.data.SessionEntity
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () -> Unit, openCoach: () -> Unit) {
+fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () -> Unit, openCoach: () -> Unit, openHyrox: () -> Unit) {
     val profile by vm.profile.collectAsState()
     val today = remember { Calc.today() }
     val weekStart = remember { Calc.weekStart(today) }
@@ -81,6 +81,11 @@ fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () 
         ForgeCard(Modifier.padding(top = 10.dp), onClick = openCoach) {
             Text("AI coach", fontWeight = FontWeight.SemiBold)
             Text("Ask about your week, recovery or why a session is set the way it is", color = Muted, fontSize = 13.sp)
+        }
+
+        ForgeCard(Modifier.padding(top = 10.dp), onClick = openHyrox) {
+            Text("HYROX splits", fontWeight = FontWeight.SemiBold)
+            Text("Log station and run times, see your predicted finish time", color = Muted, fontSize = 13.sp)
         }
 
         WeatherCard(vm, today, sessions)

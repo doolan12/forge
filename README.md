@@ -37,3 +37,6 @@ reminders, HYROX station time logging, wearable integrations.
 
 ## Stage 10: exercise demos
 Exercise detail now has a "Watch a video demo" button (opens a YouTube form-tutorial search) and, when online, a picture from wger.de (free, CC-BY-SA). If offline or no match, the step-by-step cues still show.
+
+## Stage 11: HYROX splits
+Log race, simulation or partial results (16 segments: 8 runs and 8 stations) per division. The app predicts your finish from your last 3 times on each segment, flags run fade and your biggest stations. Partial-session times are lengthened 5% (runs) and 8% (stations) as a rough fatigue allowance. Database is now version 6.

@@ -17,6 +17,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
     val programmes: Flow<List<ProgrammeEntity>> = db.programmes().all()
     val checkIns: Flow<List<CheckInEntity>> = db.checkIns().all()
     val foods: Flow<List<FoodEntryEntity>> = db.foods().all()
+    val hyroxResults: Flow<List<HyroxResultEntity>> = db.hyrox().all()
     val measurements: Flow<List<MeasurementEntity>> = db.measurements().all()
 
     private val extraEquipment = listOf("Treadmill", "Resistance band", "Plyo box", "Barbell plates", "Dumbbell rack")
@@ -132,6 +133,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
 
     // ---------- nutrition and body composition ----------
     suspend fun addFood(e: FoodEntryEntity) = db.foods().insert(e)
+    suspend fun addHyrox(e: HyroxResultEntity) = db.hyrox().insert(e)
+    suspend fun deleteHyrox(id: Long) = db.hyrox().delete(id)
     suspend fun deleteFood(id: Long) = db.foods().delete(id)
     suspend fun addMeasurement(m: MeasurementEntity) = db.measurements().insert(m)
     suspend fun deleteMeasurement(id: Long) = db.measurements().delete(id)
@@ -268,6 +271,14 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                 })
             }
         })
+        root.put("hyroxResults", JSONArray().also { a ->
+            db.hyrox().allNow().forEach { h ->
+                a.put(JSONObject().apply {
+                    put("id", h.id); put("dateEpochDay", h.dateEpochDay); put("division", h.division)
+                    put("kind", h.kind); put("splits", h.splits)
+                })
+            }
+        })
         root.put("measurements", JSONArray().also { a ->
             db.measurements().allNow().forEach { m ->
                 a.put(JSONObject().apply {
@@ -394,6 +405,13 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                 )
             }
         }
+        val hyroxList = ArrayList<HyroxResultEntity>()
+        root.optJSONArray("hyroxResults")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                hyroxList.add(HyroxResultEntity(o.getLong("id"), o.getLong("dateEpochDay"), o.getString("division"), o.getString("kind"), o.getString("splits")))
+            }
+        }
         val measures = ArrayList<MeasurementEntity>()
         root.optJSONArray("measurements")?.let { a ->
             for (i in 0 until a.length()) {
@@ -414,6 +432,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.checkIns().insertAll(checkIns)
         db.foods().insertAll(foods)
         db.measurements().insertAll(measures)
+        db.hyrox().insertAll(hyroxList)
 
         val po = root.getJSONObject("profile")
         fun s(k: String) = po.optString(k, "")

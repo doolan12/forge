@@ -134,3 +134,14 @@ data class MeasurementEntity(
     val type: String,           // Body fat %, Waist, Chest, Arm, Thigh, Hip, Neck
     val value: Double
 )
+
+@Entity(tableName = "hyrox_results")
+data class HyroxResultEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val division: String,
+    /** Race, Simulation or Partial */
+    val kind: String,
+    /** 16 comma separated seconds (run 1, SkiErg, run 2, ...), 0 = not recorded */
+    val splits: String
+)
