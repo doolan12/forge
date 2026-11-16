@@ -92,6 +92,24 @@ class ProfileStore(private val context: Context) {
         }
     }
 
+    private val wName = stringPreferencesKey("weather_name")
+    private val wLat = stringPreferencesKey("weather_lat")
+    private val wLon = stringPreferencesKey("weather_lon")
+
+    /** Where to get the weather for. Only the place the user chose, never read from GPS. */
+    val place: Flow<Place?> = context.dataStore.data.map { e ->
+        val lat = e[wLat]?.toDoubleOrNull()
+        val lon = e[wLon]?.toDoubleOrNull()
+        if (lat == null || lon == null) null else Place(e[wName] ?: "", lat, lon)
+    }
+
+    suspend fun savePlace(p: Place?) {
+        context.dataStore.edit { e ->
+            if (p == null) { e.remove(wName); e.remove(wLat); e.remove(wLon) }
+            else { e[wName] = p.name; e[wLat] = p.lat.toString(); e[wLon] = p.lon.toString() }
+        }
+    }
+
     suspend fun current(): ProfileData = profile.first()
 
     suspend fun save(p: ProfileData) {

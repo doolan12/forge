@@ -1,5 +1,6 @@
 package com.doolan.forge.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,7 +18,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.health.connect.client.PermissionController
+import kotlinx.coroutines.launch
+import com.doolan.forge.data.HealthSource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -127,12 +133,47 @@ fun CheckInDialog(initial: CheckInEntity?, today: Long, onSave: (CheckInEntity) 
     var energy by remember { mutableStateOf(initial?.energy ?: 3) }
     var hr by remember { mutableStateOf(initial?.restingHr?.takeIf { it > 0 }?.toString() ?: "") }
     val hours = sleep.toDoubleOrNull()
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var hcMessage by remember { mutableStateOf<String?>(null) }
+
+    fun fillFromHealth() {
+        scope.launch {
+            try {
+                val r = HealthSource.read(ctx)
+                r.sleepHours?.let { sleep = Calc.kg(it) }
+                r.restingHr?.let { hr = it.toString() }
+                hcMessage = if (r.sleepHours == null && r.restingHr == null)
+                    "Health Connect has no sleep or heart rate saved in the last day or two."
+                else "Filled in from Health Connect. Check the numbers and change them if they look wrong."
+            } catch (e: Exception) {
+                hcMessage = "Could not read Health Connect."
+            }
+        }
+    }
+
+    val launcher = rememberLauncherForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+        if (granted.containsAll(HealthSource.PERMISSIONS)) fillFromHealth() else hcMessage = "Permission was not given."
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Daily check-in") },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
+                OutlinedButton(onClick = {
+                    val problem = HealthSource.problem(ctx)
+                    if (problem != null) hcMessage = problem
+                    else scope.launch {
+                        try {
+                            if (HealthSource.hasPermissions(ctx)) fillFromHealth() else launcher.launch(HealthSource.PERMISSIONS)
+                        } catch (e: Exception) {
+                            hcMessage = "Could not read Health Connect."
+                        }
+                    }
+                }) { Text("Fill from Health Connect") }
+                hcMessage?.let { Text(it, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp)) }
+                Gap(8)
                 Field("Hours slept last night", sleep, { sleep = it }, number = true, suffix = "h")
                 Rating("Sleep quality", "poor", "great", quality) { quality = it }
                 Rating("Muscle soreness", "none", "very sore", sore) { sore = it }

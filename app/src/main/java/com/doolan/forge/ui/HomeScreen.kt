@@ -83,6 +83,8 @@ fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () 
             Text("Ask about your week, recovery or why a session is set the way it is", color = Muted, fontSize = 13.sp)
         }
 
+        WeatherCard(vm, today, sessions)
+
         SectionTitle("Today's training")
         if (todays.isEmpty()) {
             ForgeCard {

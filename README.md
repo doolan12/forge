@@ -26,5 +26,8 @@ Estimated calorie and macro targets from your profile and goal, a manual food lo
 ## AI coach (Stage 7)
 Chat with a coach that sees only what you have logged. Uses your own Anthropic API key, typed into the coach screen and stored only on the phone (not in backups, not in the code). It can propose changes to upcoming sessions; nothing happens until you tap Apply.
 
+## Weather and Health Connect (Stage 8)
+Forecast for planned runs from Open-Meteo (free, no key; only the town you choose is used). The daily check-in can fill sleep and resting heart rate from Android Health Connect when you tap the button; read-only, and you can edit the numbers.
+
 ## Not built yet
 reminders, HYROX station time logging, wearable integrations.
