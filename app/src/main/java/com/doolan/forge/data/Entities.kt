@@ -1,0 +1,86 @@
+package com.doolan.forge.data
+
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+
+@Entity(tableName = "exercises")
+data class ExerciseEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val category: String,
+    val primaryMuscle: String,
+    val secondaryMuscles: String,
+    val equipment: String,          // "A|B" - all are required
+    val difficulty: String,
+    val instructions: String,       // "step|step|step"
+    val mistakes: String,
+    val tips: String,
+    val isCustom: Boolean = false,
+    val isFavourite: Boolean = false
+) {
+    val equipmentList: List<String> get() = equipment.split("|").filter { it.isNotBlank() }
+    val stepList: List<String> get() = instructions.split("|").filter { it.isNotBlank() }
+    val mistakeList: List<String> get() = mistakes.split("|").filter { it.isNotBlank() }
+    val tipList: List<String> get() = tips.split("|").filter { it.isNotBlank() }
+    val secondaryList: List<String> get() = secondaryMuscles.split("|").filter { it.isNotBlank() }
+
+    fun usableWith(available: Set<String>): Boolean =
+        equipmentList.all { it == "Bodyweight" || it in available }
+}
+
+@Entity(tableName = "equipment")
+data class EquipmentEntity(
+    @PrimaryKey val name: String,
+    val available: Boolean = false,
+    val isCustom: Boolean = false
+)
+
+@Entity(tableName = "sessions")
+data class SessionEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val title: String,
+    val discipline: String,         // GYM, RUN, HYROX, REST, OTHER
+    val durationMin: Int = 60,
+    val status: String = "PLANNED", // PLANNED, DONE, SKIPPED
+    val notes: String = "",
+    val difficulty: Int = 0,        // perceived difficulty 1-10 after the session
+    val startedAt: Long = 0,
+    val finishedAt: Long = 0,
+    val distanceKm: Double = 0.0,   // runs
+    val durationSec: Int = 0        // runs: actual time
+)
+
+@Entity(tableName = "session_exercises")
+data class SessionExerciseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val exerciseId: String,
+    val orderIdx: Int,
+    val targetSets: Int = 3,
+    val repsMin: Int = 8,
+    val repsMax: Int = 12,
+    val targetRir: Int = 2,
+    val restSec: Int = 90
+)
+
+@Entity(tableName = "set_logs")
+data class SetLogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val sessionId: Long,
+    val sessionExerciseId: Long,
+    val exerciseId: String,
+    val setIndex: Int,
+    val weightKg: Double,
+    val reps: Int,
+    val rir: Int,
+    val completedAt: Long,
+    val dateEpochDay: Long
+)
+
+@Entity(tableName = "bodyweight")
+data class BodyweightEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val kg: Double
+)
