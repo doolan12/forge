@@ -37,10 +37,12 @@ import com.doolan.forge.data.SessionEntity
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
+fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openGenerator: () -> Unit) {
     val exercises by vm.exercises.collectAsState()
     val available by vm.availableEquipment.collectAsState()
     val equipment by vm.equipment.collectAsState()
+    val programmes by vm.programmes.collectAsState()
+    var deleteProgramme by remember { mutableStateOf<com.doolan.forge.data.ProgrammeEntity?>(null) }
 
     var query by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("All") }
@@ -70,6 +72,20 @@ fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
                 }
             }) { Text("Start empty workout") }
             OutlinedButton(onClick = { showPlan = true }) { Text("Plan a session") }
+        }
+
+        Gap(8)
+        Button(onClick = openGenerator, modifier = Modifier.fillMaxWidth()) { Text("Build a programme") }
+        programmes.forEach { g ->
+            ForgeCard(Modifier.padding(top = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) {
+                        Text(g.name, fontWeight = FontWeight.SemiBold)
+                        Text("${g.weeks} weeks from ${Calc.dateLabel(g.startDay)}", color = Muted, fontSize = 12.sp)
+                    }
+                    TextButton(onClick = { deleteProgramme = g }) { Text("Remove", color = Danger) }
+                }
+            }
         }
 
         SectionTitle("Exercise library (${shown.size})")
@@ -140,6 +156,15 @@ fun TrainingScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
             availableEquipment = equipment.map { it.name },
             onCreate = { vm.addCustomExercise(it) },
             onDismiss = { showCustom = false }
+        )
+    }
+    deleteProgramme?.let { g ->
+        ConfirmDialog(
+            title = "Remove programme?",
+            text = "Upcoming sessions from ${g.name} are removed from your calendar. Sessions you already completed stay.",
+            confirmLabel = "Remove",
+            onConfirm = { vm.deleteProgramme(g.id) },
+            onDismiss = { deleteProgramme = null }
         )
     }
     deleteTarget?.let { e ->

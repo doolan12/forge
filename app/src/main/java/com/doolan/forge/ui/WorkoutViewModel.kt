@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.doolan.forge.data.Calc
+import com.doolan.forge.data.Progression
 import com.doolan.forge.data.ExerciseEntity
 import com.doolan.forge.data.Repository
 import com.doolan.forge.data.SessionEntity
@@ -27,6 +28,7 @@ class SetRow(weight: String, reps: String, rir: String, done: Boolean, var logId
 class ExBlock(val se: SessionExerciseEntity, val exercise: ExerciseEntity, previous: String) {
     val rows = mutableStateListOf<SetRow>()
     var previous by mutableStateOf(previous)
+    var suggestion by mutableStateOf("")
 }
 
 class WorkoutViewModel(private val repo: Repository, val sessionId: Long) : ViewModel() {
@@ -82,13 +84,35 @@ class WorkoutViewModel(private val repo: Repository, val sessionId: Long) : View
                 )
             )
         }
+        // programmed sets (for example 5/3/1 percentages) fill the rows with weights and reps
+        val planned = se.setPlan.split(";").mapNotNull { part ->
+            val bits = part.split("x")
+            val kg = bits.getOrNull(0)?.toDoubleOrNull()
+            val reps = bits.getOrNull(1)?.filter { it.isDigit() }?.toIntOrNull()
+            if (kg != null && reps != null) kg to reps else null
+        }
+        val sug = Progression.suggest(lastSets, se, ex)
+        block.suggestion = when {
+            planned.isNotEmpty() && planned.any { it.first > 0 } -> "Programmed weights are filled in. Change them if they feel wrong."
+            se.targetWeightKg > 0 -> "Programmed starting weight: ${Calc.kg(se.targetWeightKg)} kg."
+            else -> sug.text
+        }
         var i = block.rows.size
         while (block.rows.size < se.targetSets) {
             val p = lastSets.getOrNull(i)
+            val pl = planned.getOrNull(i)
+            val weight = when {
+                pl != null && pl.first > 0 -> pl.first
+                se.targetWeightKg > 0 -> se.targetWeightKg
+                (sug.weight ?: 0.0) > 0 -> sug.weight ?: 0.0
+                p != null && p.weightKg > 0 -> p.weightKg
+                else -> 0.0
+            }
             block.rows.add(
                 SetRow(
-                    if (p != null && p.weightKg > 0) Calc.kg(p.weightKg) else "",
-                    "", "", false
+                    if (weight > 0) Calc.kg(weight) else "",
+                    if (pl != null) pl.second.toString() else "",
+                    "", false
                 )
             )
             i++
@@ -120,7 +144,7 @@ class WorkoutViewModel(private val repo: Repository, val sessionId: Long) : View
             return
         }
         viewModelScope.launch {
-            val updated = block.se.copy(exerciseId = newEx.id)
+            val updated = block.se.copy(exerciseId = newEx.id, setPlan = "", targetWeightKg = 0.0)
             repo.updateSessionExercise(updated)
             val idx = blocks.indexOf(block)
             if (idx >= 0) blocks[idx] = buildBlock(updated, newEx, emptyList())

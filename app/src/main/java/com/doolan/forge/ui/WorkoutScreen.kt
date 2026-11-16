@@ -119,6 +119,14 @@ fun WorkoutScreen(wvm: WorkoutViewModel, app: AppViewModel, onClose: () -> Unit)
         }
 
         LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (s.reason.isNotBlank()) {
+                item {
+                    ForgeCard {
+                        Text("Why this session", fontWeight = FontWeight.SemiBold)
+                        Text(s.reason, color = Muted, fontSize = 13.sp)
+                    }
+                }
+            }
             if (s.discipline == "RUN") {
                 item {
                     ForgeCard {
@@ -156,6 +164,12 @@ fun WorkoutScreen(wvm: WorkoutViewModel, app: AppViewModel, onClose: () -> Unit)
                             IconButton(onClick = { swapTarget = block }) { Icon(Icons.Default.SwapHoriz, "Swap exercise") }
                         }
                         IconButton(onClick = { removeTarget = block }) { Icon(Icons.Default.Delete, "Remove exercise") }
+                    }
+                    if (block.se.note.isNotBlank()) {
+                        Text(block.se.note, color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
+                    }
+                    if (block.suggestion.isNotBlank()) {
+                        Text(block.suggestion, color = Accent, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))
                     }
                     if (block.previous.isNotBlank()) {
                         Text("Last time: ${block.previous}", color = Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 4.dp))

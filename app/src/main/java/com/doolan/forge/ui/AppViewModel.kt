@@ -5,7 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.doolan.forge.data.BodyweightEntity
 import com.doolan.forge.data.EquipmentEntity
 import com.doolan.forge.data.ExerciseEntity
+import com.doolan.forge.data.GenOptions
+import com.doolan.forge.data.GenResult
 import com.doolan.forge.data.ProfileData
+import com.doolan.forge.data.ProgrammeEntity
+import com.doolan.forge.data.SessionExerciseEntity
 import com.doolan.forge.data.Repository
 import com.doolan.forge.data.SessionEntity
 import kotlinx.coroutines.flow.Flow
@@ -34,6 +38,40 @@ class AppViewModel(val repo: Repository) : ViewModel() {
 
     val bodyweight: StateFlow<List<BodyweightEntity>> =
         repo.bodyweight.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val programmes: StateFlow<List<ProgrammeEntity>> =
+        repo.programmes.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun savePlan(o: GenOptions, result: GenResult, replaceOld: Boolean, onDone: () -> Unit) {
+        viewModelScope.launch {
+            val first = result.sessions.minOfOrNull { it.dayEpoch } ?: 0L
+            val name = if (o.goal == "Strength") "Strength - ${o.method}" else "Hypertrophy - ${o.split}"
+            val programme = ProgrammeEntity(
+                name = name, goal = o.goal, split = o.split, method = o.method,
+                startDay = first, weeks = o.weeks, createdAt = System.currentTimeMillis()
+            )
+            val plan = result.sessions.map { g ->
+                val session = SessionEntity(
+                    dateEpochDay = g.dayEpoch, title = g.title, discipline = "GYM",
+                    durationMin = g.minutes, reason = g.reason
+                )
+                val exs = g.exercises.map { e ->
+                    SessionExerciseEntity(
+                        sessionId = 0, exerciseId = e.exercise.id, orderIdx = 0, targetSets = e.sets,
+                        repsMin = e.repsMin, repsMax = e.repsMax, targetRir = e.rir, restSec = e.restSec,
+                        targetWeightKg = e.weightKg, setPlan = e.setPlan, note = e.note
+                    )
+                }
+                session to exs
+            }
+            repo.savePlan(programme, plan, replaceOld)
+            onDone()
+        }
+    }
+
+    fun deleteProgramme(id: Long) {
+        viewModelScope.launch { repo.deleteProgramme(id) }
+    }
 
     fun saveProfile(p: ProfileData) {
         viewModelScope.launch { repo.saveProfile(p) }

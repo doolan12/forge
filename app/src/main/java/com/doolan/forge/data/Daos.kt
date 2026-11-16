@@ -78,6 +78,27 @@ interface SessionDao {
 
     @Query("DELETE FROM sessions WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("SELECT id FROM sessions WHERE programmeId = :programmeId AND status = 'PLANNED' AND dateEpochDay >= :fromDay")
+    suspend fun futurePlannedIds(programmeId: Long, fromDay: Long): List<Long>
+}
+
+@Dao
+interface ProgrammeDao {
+    @Query("SELECT * FROM programmes ORDER BY createdAt DESC")
+    fun all(): Flow<List<ProgrammeEntity>>
+
+    @Query("SELECT * FROM programmes")
+    suspend fun allNow(): List<ProgrammeEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(p: ProgrammeEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<ProgrammeEntity>)
+
+    @Query("DELETE FROM programmes WHERE id = :id")
+    suspend fun delete(id: Long)
 }
 
 @Dao

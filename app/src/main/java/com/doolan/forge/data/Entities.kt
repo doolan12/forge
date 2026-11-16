@@ -48,7 +48,9 @@ data class SessionEntity(
     val startedAt: Long = 0,
     val finishedAt: Long = 0,
     val distanceKm: Double = 0.0,   // runs
-    val durationSec: Int = 0        // runs: actual time
+    val durationSec: Int = 0,       // runs: actual time
+    val reason: String = "",        // why the generator scheduled this session
+    val programmeId: Long = 0       // 0 = added by hand
 )
 
 @Entity(tableName = "session_exercises")
@@ -61,7 +63,10 @@ data class SessionExerciseEntity(
     val repsMin: Int = 8,
     val repsMax: Int = 12,
     val targetRir: Int = 2,
-    val restSec: Int = 90
+    val restSec: Int = 90,
+    val targetWeightKg: Double = 0.0,
+    val setPlan: String = "",       // "62.5x5;72.5x5;82.5x5" (kg x reps per set), blank = use the target fields
+    val note: String = ""
 )
 
 @Entity(tableName = "set_logs")
@@ -83,4 +88,16 @@ data class BodyweightEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val dateEpochDay: Long,
     val kg: Double
+)
+
+@Entity(tableName = "programmes")
+data class ProgrammeEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val goal: String,
+    val split: String,
+    val method: String,
+    val startDay: Long,
+    val weeks: Int,
+    val createdAt: Long
 )

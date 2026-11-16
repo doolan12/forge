@@ -44,6 +44,7 @@ import com.doolan.forge.ui.Accent
 import com.doolan.forge.ui.Bg
 import com.doolan.forge.ui.CalendarScreen
 import com.doolan.forge.ui.ForgeTheme
+import com.doolan.forge.ui.GeneratorScreen
 import com.doolan.forge.ui.HomeScreen
 import com.doolan.forge.ui.Muted
 import com.doolan.forge.ui.OnboardingScreen
@@ -136,7 +137,15 @@ private fun MainNav(vm: AppViewModel, app: ForgeApp) {
     ) { inner ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(inner)) {
             composable("home") { HomeScreen(vm) { id -> nav.navigate("workout/$id") } }
-            composable("training") { TrainingScreen(vm) { id -> nav.navigate("workout/$id") } }
+            composable("training") { TrainingScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("generator") }) }
+            composable("generator") {
+                GeneratorScreen(vm, onBack = { nav.popBackStack() }, onSaved = {
+                    nav.navigate("calendar") {
+                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                    }
+                })
+            }
             composable("calendar") { CalendarScreen(vm) { id -> nav.navigate("workout/$id") } }
             composable("progress") { ProgressScreen(vm) }
             composable("profile") { ProfileScreen(vm) }

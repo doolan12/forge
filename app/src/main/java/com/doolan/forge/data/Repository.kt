@@ -1,6 +1,7 @@
 package com.doolan.forge.data
 
 import android.content.Context
+import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -13,6 +14,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
     val exercises: Flow<List<ExerciseEntity>> = db.exercises().all()
     val equipment: Flow<List<EquipmentEntity>> = db.equipment().all()
     val bodyweight: Flow<List<BodyweightEntity>> = db.bodyweight().all()
+    val programmes: Flow<List<ProgrammeEntity>> = db.programmes().all()
 
     private val extraEquipment = listOf("Treadmill", "Resistance band", "Plyo box", "Barbell plates", "Dumbbell rack")
 
@@ -69,6 +71,33 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.setLogs().deleteForSession(id)
         db.sessionExercises().deleteForSession(id)
         db.sessions().delete(id)
+    }
+
+    /** Removes the not-yet-done sessions of one programme (done sessions and their logs are kept). */
+    suspend fun deleteProgramme(id: Long) {
+        db.sessions().futurePlannedIds(id, Calc.today()).forEach { deleteSession(it) }
+        db.programmes().delete(id)
+    }
+
+    /** Saves a generated programme. Optionally clears the future sessions of any earlier programmes first. */
+    suspend fun savePlan(
+        programme: ProgrammeEntity,
+        plan: List<Pair<SessionEntity, List<SessionExerciseEntity>>>,
+        replaceOld: Boolean
+    ) = db.withTransaction {
+        if (replaceOld) {
+            db.programmes().allNow().forEach { old ->
+                db.sessions().futurePlannedIds(old.id, Calc.today()).forEach { deleteSession(it) }
+                db.programmes().delete(old.id)
+            }
+        }
+        val pid = db.programmes().insert(programme)
+        plan.forEach { (s, exs) ->
+            val sid = db.sessions().insert(s.copy(programmeId = pid))
+            exs.forEachIndexed { i, e ->
+                db.sessionExercises().insert(e.copy(sessionId = sid, orderIdx = i))
+            }
+        }
     }
 
     suspend fun moveSession(id: Long, newDay: Long) {
@@ -143,6 +172,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     put("discipline", s.discipline); put("durationMin", s.durationMin); put("status", s.status)
                     put("notes", s.notes); put("difficulty", s.difficulty); put("startedAt", s.startedAt)
                     put("finishedAt", s.finishedAt); put("distanceKm", s.distanceKm); put("durationSec", s.durationSec)
+                    put("reason", s.reason); put("programmeId", s.programmeId)
                 })
             }
         })
@@ -152,6 +182,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     put("id", e.id); put("sessionId", e.sessionId); put("exerciseId", e.exerciseId)
                     put("orderIdx", e.orderIdx); put("targetSets", e.targetSets); put("repsMin", e.repsMin)
                     put("repsMax", e.repsMax); put("targetRir", e.targetRir); put("restSec", e.restSec)
+                    put("targetWeightKg", e.targetWeightKg); put("setPlan", e.setPlan); put("note", e.note)
                 })
             }
         })
@@ -169,6 +200,15 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
             db.bodyweight().allNow().forEach { b ->
                 a.put(JSONObject().apply {
                     put("id", b.id); put("dateEpochDay", b.dateEpochDay); put("kg", b.kg)
+                })
+            }
+        })
+        root.put("programmes", JSONArray().also { a ->
+            db.programmes().allNow().forEach { g ->
+                a.put(JSONObject().apply {
+                    put("id", g.id); put("name", g.name); put("goal", g.goal); put("split", g.split)
+                    put("method", g.method); put("startDay", g.startDay); put("weeks", g.weeks)
+                    put("createdAt", g.createdAt)
                 })
             }
         })
@@ -211,7 +251,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                         o.getLong("id"), o.getLong("dateEpochDay"), o.getString("title"), o.getString("discipline"),
                         o.getInt("durationMin"), o.getString("status"), o.optString("notes", ""),
                         o.optInt("difficulty", 0), o.optLong("startedAt", 0), o.optLong("finishedAt", 0),
-                        o.optDouble("distanceKm", 0.0), o.optInt("durationSec", 0)
+                        o.optDouble("distanceKm", 0.0), o.optInt("durationSec", 0),
+                        o.optString("reason", ""), o.optLong("programmeId", 0)
                     )
                 )
             }
@@ -224,7 +265,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     SessionExerciseEntity(
                         o.getLong("id"), o.getLong("sessionId"), o.getString("exerciseId"), o.getInt("orderIdx"),
                         o.getInt("targetSets"), o.getInt("repsMin"), o.getInt("repsMax"),
-                        o.getInt("targetRir"), o.getInt("restSec")
+                        o.getInt("targetRir"), o.getInt("restSec"),
+                        o.optDouble("targetWeightKg", 0.0), o.optString("setPlan", ""), o.optString("note", "")
                     )
                 )
             }
@@ -250,6 +292,19 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
             }
         }
 
+        val programmes = ArrayList<ProgrammeEntity>()
+        root.optJSONArray("programmes")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                programmes.add(
+                    ProgrammeEntity(
+                        o.getLong("id"), o.getString("name"), o.getString("goal"), o.getString("split"),
+                        o.getString("method"), o.getLong("startDay"), o.getInt("weeks"), o.getLong("createdAt")
+                    )
+                )
+            }
+        }
+
         // Everything parsed fine, so it is now safe to wipe and restore.
         db.clearAllTables()
         db.exercises().insertAll(exercises)
@@ -258,6 +313,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.sessionExercises().insertAll(sessionExercises)
         db.setLogs().insertAll(logs)
         db.bodyweight().insertAll(weights)
+        db.programmes().insertAll(programmes)
 
         val po = root.getJSONObject("profile")
         fun s(k: String) = po.optString(k, "")
