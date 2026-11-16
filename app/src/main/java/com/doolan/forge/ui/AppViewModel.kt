@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.doolan.forge.data.BodyweightEntity
 import com.doolan.forge.data.CheckInEntity
+import com.doolan.forge.data.FoodEntryEntity
+import com.doolan.forge.data.MeasurementEntity
 import com.doolan.forge.data.EquipmentEntity
 import com.doolan.forge.data.ExerciseEntity
 import com.doolan.forge.data.GenResult
@@ -44,6 +46,17 @@ class AppViewModel(val repo: Repository) : ViewModel() {
 
     val checkIns: StateFlow<List<CheckInEntity>> =
         repo.checkIns.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val foods: StateFlow<List<FoodEntryEntity>> =
+        repo.foods.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val measurements: StateFlow<List<MeasurementEntity>> =
+        repo.measurements.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun addFood(e: FoodEntryEntity) { viewModelScope.launch { repo.addFood(e) } }
+    fun deleteFood(id: Long) { viewModelScope.launch { repo.deleteFood(id) } }
+    fun addMeasurement(m: MeasurementEntity) { viewModelScope.launch { repo.addMeasurement(m) } }
+    fun deleteMeasurement(id: Long) { viewModelScope.launch { repo.deleteMeasurement(id) } }
 
     fun saveCheckIn(c: CheckInEntity) {
         viewModelScope.launch { repo.saveCheckIn(c) }

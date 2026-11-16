@@ -30,7 +30,7 @@ import com.doolan.forge.data.SessionEntity
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
+fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () -> Unit) {
     val profile by vm.profile.collectAsState()
     val today = remember { Calc.today() }
     val weekStart = remember { Calc.weekStart(today) }
@@ -64,6 +64,19 @@ fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
 
         SectionTitle("Recovery")
         ReadinessCard(vm, today, todays)
+
+        val foods by vm.foods.collectAsState()
+        val todayFoods = foods.filter { it.dateEpochDay == today }
+        val nTargets = profile?.let { com.doolan.forge.data.Nutrition.targets(it) }
+        ForgeCard(Modifier.padding(top = 10.dp), onClick = openNutrition) {
+            Text("Nutrition", fontWeight = FontWeight.SemiBold)
+            Text(
+                if (nTargets != null) "${todayFoods.sumOf { it.kcal }} of ${nTargets.kcal} kcal | ${todayFoods.sumOf { it.proteinG }.toInt()} of ${nTargets.proteinG} g protein"
+                else "${todayFoods.sumOf { it.kcal }} kcal logged today",
+                color = Muted, fontSize = 13.sp
+            )
+            Text("Tap to log food, set targets and track measurements", color = Accent, fontSize = 12.sp)
+        }
 
         SectionTitle("Today's training")
         if (todays.isEmpty()) {

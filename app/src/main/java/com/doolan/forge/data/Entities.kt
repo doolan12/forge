@@ -115,3 +115,22 @@ data class CheckInEntity(
     val restingHr: Int = 0,     // 0 = not logged
     val note: String = ""
 )
+
+@Entity(tableName = "food_entries")
+data class FoodEntryEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val name: String,
+    val kcal: Int,
+    val proteinG: Double,
+    val carbsG: Double,
+    val fatG: Double
+)
+
+@Entity(tableName = "measurements")
+data class MeasurementEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val type: String,           // Body fat %, Waist, Chest, Arm, Thigh, Hip, Neck
+    val value: Double
+)

@@ -190,3 +190,39 @@ interface CheckInDao {
     @Query("SELECT * FROM checkins ORDER BY dateEpochDay, id")
     suspend fun allNow(): List<CheckInEntity>
 }
+
+@Dao
+interface FoodDao {
+    @Insert
+    suspend fun insert(e: FoodEntryEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<FoodEntryEntity>)
+
+    @Query("DELETE FROM food_entries WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT * FROM food_entries ORDER BY dateEpochDay, id")
+    fun all(): Flow<List<FoodEntryEntity>>
+
+    @Query("SELECT * FROM food_entries ORDER BY dateEpochDay, id")
+    suspend fun allNow(): List<FoodEntryEntity>
+}
+
+@Dao
+interface MeasurementDao {
+    @Insert
+    suspend fun insert(m: MeasurementEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<MeasurementEntity>)
+
+    @Query("DELETE FROM measurements WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT * FROM measurements ORDER BY dateEpochDay, id")
+    fun all(): Flow<List<MeasurementEntity>>
+
+    @Query("SELECT * FROM measurements ORDER BY dateEpochDay, id")
+    suspend fun allNow(): List<MeasurementEntity>
+}

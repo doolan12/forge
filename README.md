@@ -20,5 +20,8 @@ Build gym (hypertrophy or strength), running and HYROX plans, alone or combined.
 ## Recovery (Stage 5)
 A daily check-in (sleep, soreness, stress, energy, optional resting heart rate) gives a readiness score from your own answers. On a low day you can choose to ease today's session; nothing is ever pushed onto other days. Training load compares this week with your usual.
 
+## Nutrition and body composition (Stage 6)
+Estimated calorie and macro targets from your profile and goal, a manual food log (you enter the numbers, no made-up food database), and body measurements with trends plus a tape-measure body fat estimate.
+
 ## Not built yet
-Nutrition and body composition, AI coach, reminders, HYROX station time logging, wearable integrations.
+AI coach, reminders, HYROX station time logging, wearable integrations.

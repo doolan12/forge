@@ -37,7 +37,8 @@ data class ProfileData(
     val sleepHours: String = "",
     val primaryGoal: String = "Hypertrophy",
     val secondaryGoals: Set<String> = emptySet(),
-    val injuries: String = ""
+    val injuries: String = "",
+    val nutritionGoal: String = "Maintain"
 )
 
 class ProfileStore(private val context: Context) {
@@ -51,6 +52,7 @@ class ProfileStore(private val context: Context) {
         val squat = s("squat"); val bench = s("bench"); val dead = s("dead"); val ohp = s("ohp")
         val days = s("days"); val time = s("time"); val sessionMin = s("sessionMin"); val sleep = s("sleep")
         val primary = s("primary"); val secondary = s("secondary"); val injuries = s("injuries")
+        val nutrition = s("nutritionGoal")
     }
 
     private fun Preferences.toProfile(): ProfileData {
@@ -67,7 +69,8 @@ class ProfileStore(private val context: Context) {
             preferredTime = g(K.time, "Morning"), sessionMin = g(K.sessionMin, "60"), sleepHours = g(K.sleep),
             primaryGoal = g(K.primary, "Hypertrophy"),
             secondaryGoals = g(K.secondary).split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet(),
-            injuries = g(K.injuries)
+            injuries = g(K.injuries),
+            nutritionGoal = g(K.nutrition, "Maintain")
         )
     }
 
@@ -87,6 +90,7 @@ class ProfileStore(private val context: Context) {
             e[K.time] = p.preferredTime; e[K.sessionMin] = p.sessionMin; e[K.sleep] = p.sleepHours
             e[K.primary] = p.primaryGoal; e[K.secondary] = p.secondaryGoals.joinToString(",")
             e[K.injuries] = p.injuries
+            e[K.nutrition] = p.nutritionGoal
         }
     }
 }

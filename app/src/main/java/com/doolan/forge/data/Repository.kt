@@ -16,6 +16,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
     val bodyweight: Flow<List<BodyweightEntity>> = db.bodyweight().all()
     val programmes: Flow<List<ProgrammeEntity>> = db.programmes().all()
     val checkIns: Flow<List<CheckInEntity>> = db.checkIns().all()
+    val foods: Flow<List<FoodEntryEntity>> = db.foods().all()
+    val measurements: Flow<List<MeasurementEntity>> = db.measurements().all()
 
     private val extraEquipment = listOf("Treadmill", "Resistance band", "Plyo box", "Barbell plates", "Dumbbell rack")
 
@@ -128,6 +130,12 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.bodyweight().insert(BodyweightEntity(dateEpochDay = Calc.today(), kg = kg))
     suspend fun deleteBodyweight(b: BodyweightEntity) = db.bodyweight().delete(b)
 
+    // ---------- nutrition and body composition ----------
+    suspend fun addFood(e: FoodEntryEntity) = db.foods().insert(e)
+    suspend fun deleteFood(id: Long) = db.foods().delete(id)
+    suspend fun addMeasurement(m: MeasurementEntity) = db.measurements().insert(m)
+    suspend fun deleteMeasurement(id: Long) = db.measurements().delete(id)
+
     // ---------- recovery ----------
     suspend fun saveCheckIn(c: CheckInEntity) = db.withTransaction {
         db.checkIns().deleteForDay(c.dateEpochDay)
@@ -175,7 +183,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
             put("trainingDays", p.trainingDays.sorted().joinToString(","))
             put("preferredTime", p.preferredTime); put("sessionMin", p.sessionMin); put("sleepHours", p.sleepHours)
             put("primaryGoal", p.primaryGoal); put("secondaryGoals", p.secondaryGoals.joinToString(","))
-            put("injuries", p.injuries)
+            put("injuries", p.injuries); put("nutritionGoal", p.nutritionGoal)
         })
 
         root.put("exercises", JSONArray().also { a ->
@@ -249,6 +257,21 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     put("id", c.id); put("dateEpochDay", c.dateEpochDay); put("sleepHours", c.sleepHours)
                     put("sleepQuality", c.sleepQuality); put("soreness", c.soreness); put("stress", c.stress)
                     put("energy", c.energy); put("restingHr", c.restingHr); put("note", c.note)
+                })
+            }
+        })
+        root.put("foods", JSONArray().also { a ->
+            db.foods().allNow().forEach { f ->
+                a.put(JSONObject().apply {
+                    put("id", f.id); put("dateEpochDay", f.dateEpochDay); put("name", f.name); put("kcal", f.kcal)
+                    put("proteinG", f.proteinG); put("carbsG", f.carbsG); put("fatG", f.fatG)
+                })
+            }
+        })
+        root.put("measurements", JSONArray().also { a ->
+            db.measurements().allNow().forEach { m ->
+                a.put(JSONObject().apply {
+                    put("id", m.id); put("dateEpochDay", m.dateEpochDay); put("type", m.type); put("value", m.value)
                 })
             }
         })
@@ -359,6 +382,26 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
             }
         }
 
+        val foods = ArrayList<FoodEntryEntity>()
+        root.optJSONArray("foods")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                foods.add(
+                    FoodEntryEntity(
+                        o.getLong("id"), o.getLong("dateEpochDay"), o.getString("name"), o.getInt("kcal"),
+                        o.getDouble("proteinG"), o.getDouble("carbsG"), o.getDouble("fatG")
+                    )
+                )
+            }
+        }
+        val measures = ArrayList<MeasurementEntity>()
+        root.optJSONArray("measurements")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                measures.add(MeasurementEntity(o.getLong("id"), o.getLong("dateEpochDay"), o.getString("type"), o.getDouble("value")))
+            }
+        }
+
         // Everything parsed fine, so it is now safe to wipe and restore.
         db.clearAllTables()
         db.exercises().insertAll(exercises)
@@ -369,6 +412,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.bodyweight().insertAll(weights)
         db.programmes().insertAll(programmes)
         db.checkIns().insertAll(checkIns)
+        db.foods().insertAll(foods)
+        db.measurements().insertAll(measures)
 
         val po = root.getJSONObject("profile")
         fun s(k: String) = po.optString(k, "")
@@ -386,7 +431,8 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                 sessionMin = s("sessionMin").ifEmpty { "60" }, sleepHours = s("sleepHours"),
                 primaryGoal = s("primaryGoal").ifEmpty { "Hypertrophy" },
                 secondaryGoals = s("secondaryGoals").split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet(),
-                injuries = s("injuries")
+                injuries = s("injuries"),
+                nutritionGoal = s("nutritionGoal").ifEmpty { "Maintain" }
             )
         )
     }
