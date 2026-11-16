@@ -34,3 +34,6 @@ Optional daily training reminder (only when a session is planned) and check-in r
 
 ## Not built yet
 reminders, HYROX station time logging, wearable integrations.
+
+## Stage 10: exercise demos
+Exercise detail now has a "Watch a video demo" button (opens a YouTube form-tutorial search) and, when online, a picture from wger.de (free, CC-BY-SA). If offline or no match, the step-by-step cues still show.
