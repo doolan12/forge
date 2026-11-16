@@ -48,6 +48,7 @@ import com.doolan.forge.ui.CoachViewModel
 import com.doolan.forge.ui.ForgeTheme
 import com.doolan.forge.ui.GeneratorScreen
 import com.doolan.forge.ui.HomeScreen
+import com.doolan.forge.ui.HyroxScreen
 import com.doolan.forge.ui.Muted
 import com.doolan.forge.ui.NutritionScreen
 import com.doolan.forge.ui.OnboardingScreen
