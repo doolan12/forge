@@ -23,5 +23,8 @@ A daily check-in (sleep, soreness, stress, energy, optional resting heart rate) 
 ## Nutrition and body composition (Stage 6)
 Estimated calorie and macro targets from your profile and goal, a manual food log (you enter the numbers, no made-up food database), and body measurements with trends plus a tape-measure body fat estimate.
 
+## AI coach (Stage 7)
+Chat with a coach that sees only what you have logged. Uses your own Anthropic API key, typed into the coach screen and stored only on the phone (not in backups, not in the code). It can propose changes to upcoming sessions; nothing happens until you tap Apply.
+
 ## Not built yet
-AI coach, reminders, HYROX station time logging, wearable integrations.
+reminders, HYROX station time logging, wearable integrations.

@@ -30,7 +30,7 @@ import com.doolan.forge.data.SessionEntity
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () -> Unit) {
+fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () -> Unit, openCoach: () -> Unit) {
     val profile by vm.profile.collectAsState()
     val today = remember { Calc.today() }
     val weekStart = remember { Calc.weekStart(today) }
@@ -76,6 +76,11 @@ fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit, openNutrition: () 
                 color = Muted, fontSize = 13.sp
             )
             Text("Tap to log food, set targets and track measurements", color = Accent, fontSize = 12.sp)
+        }
+
+        ForgeCard(Modifier.padding(top = 10.dp), onClick = openCoach) {
+            Text("AI coach", fontWeight = FontWeight.SemiBold)
+            Text("Ask about your week, recovery or why a session is set the way it is", color = Muted, fontSize = 13.sp)
         }
 
         SectionTitle("Today's training")

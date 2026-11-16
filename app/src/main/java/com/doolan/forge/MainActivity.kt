@@ -43,6 +43,8 @@ import com.doolan.forge.ui.AppViewModel
 import com.doolan.forge.ui.Accent
 import com.doolan.forge.ui.Bg
 import com.doolan.forge.ui.CalendarScreen
+import com.doolan.forge.ui.CoachScreen
+import com.doolan.forge.ui.CoachViewModel
 import com.doolan.forge.ui.ForgeTheme
 import com.doolan.forge.ui.GeneratorScreen
 import com.doolan.forge.ui.HomeScreen
@@ -137,7 +139,14 @@ private fun MainNav(vm: AppViewModel, app: ForgeApp) {
         }
     ) { inner ->
         NavHost(nav, startDestination = "home", modifier = Modifier.padding(inner)) {
-            composable("home") { HomeScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("nutrition") }) }
+            composable("home") { HomeScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("nutrition") }, { nav.navigate("coach") }) }
+            composable("coach") {
+                val cvm: CoachViewModel = viewModel(
+                    key = "coach",
+                    factory = viewModelFactory { initializer { CoachViewModel(app.repo) } }
+                )
+                CoachScreen(cvm) { nav.popBackStack() }
+            }
             composable("nutrition") { NutritionScreen(vm) { nav.popBackStack() } }
             composable("training") { TrainingScreen(vm, { id -> nav.navigate("workout/$id") }, { nav.navigate("generator") }) }
             composable("generator") {

@@ -41,6 +41,8 @@ data class ProfileData(
     val nutritionGoal: String = "Maintain"
 )
 
+const val DEFAULT_MODEL = "claude-sonnet-5-5"
+
 class ProfileStore(private val context: Context) {
 
     private object K {
@@ -75,6 +77,20 @@ class ProfileStore(private val context: Context) {
     }
 
     val profile: Flow<ProfileData> = context.dataStore.data.map { it.toProfile() }
+
+    private val coachKey = stringPreferencesKey("coach_api_key")
+    private val coachModel = stringPreferencesKey("coach_model")
+
+    /** The user's own AI key. Kept only on this phone and never included in backups. */
+    val apiKey: Flow<String> = context.dataStore.data.map { it[coachKey] ?: "" }
+    val modelName: Flow<String> = context.dataStore.data.map { it[coachModel] ?: DEFAULT_MODEL }
+
+    suspend fun saveCoach(key: String, model: String) {
+        context.dataStore.edit { e ->
+            e[coachKey] = key.trim()
+            e[coachModel] = model.trim().ifEmpty { DEFAULT_MODEL }
+        }
+    }
 
     suspend fun current(): ProfileData = profile.first()
 
