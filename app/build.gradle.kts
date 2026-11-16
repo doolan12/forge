@@ -69,5 +69,5 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
 
     implementation("androidx.datastore:datastore-preferences:1.1.1")
-    implementation("androidx.health.connect:connect-client:1.1.0-alpha10")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
 }
