@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.doolan.forge.data.BodyweightEntity
 import com.doolan.forge.data.EquipmentEntity
 import com.doolan.forge.data.ExerciseEntity
-import com.doolan.forge.data.GenOptions
 import com.doolan.forge.data.GenResult
 import com.doolan.forge.data.ProfileData
 import com.doolan.forge.data.ProgrammeEntity
@@ -42,18 +41,20 @@ class AppViewModel(val repo: Repository) : ViewModel() {
     val programmes: StateFlow<List<ProgrammeEntity>> =
         repo.programmes.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
-    fun savePlan(o: GenOptions, result: GenResult, replaceOld: Boolean, onDone: () -> Unit) {
+    fun savePlan(
+        name: String, goal: String, detail: String, weeks: Int,
+        result: GenResult, replaceOld: Boolean, onDone: () -> Unit
+    ) {
         viewModelScope.launch {
             val first = result.sessions.minOfOrNull { it.dayEpoch } ?: 0L
-            val name = if (o.goal == "Strength") "Strength - ${o.method}" else "Hypertrophy - ${o.split}"
             val programme = ProgrammeEntity(
-                name = name, goal = o.goal, split = o.split, method = o.method,
-                startDay = first, weeks = o.weeks, createdAt = System.currentTimeMillis()
+                name = name, goal = goal, split = detail, method = "",
+                startDay = first, weeks = weeks, createdAt = System.currentTimeMillis()
             )
             val plan = result.sessions.map { g ->
                 val session = SessionEntity(
-                    dateEpochDay = g.dayEpoch, title = g.title, discipline = "GYM",
-                    durationMin = g.minutes, reason = g.reason
+                    dateEpochDay = g.dayEpoch, title = g.title, discipline = g.discipline,
+                    durationMin = g.minutes, reason = g.reason, workout = g.workout
                 )
                 val exs = g.exercises.map { e ->
                     SessionExerciseEntity(

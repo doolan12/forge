@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         BodyweightEntity::class,
         ProgrammeEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class ForgeDatabase : RoomDatabase() {
@@ -32,8 +32,14 @@ abstract class ForgeDatabase : RoomDatabase() {
     companion object {
         fun build(context: Context): ForgeDatabase =
             Room.databaseBuilder(context, ForgeDatabase::class.java, "forge.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
+
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE sessions ADD COLUMN workout TEXT NOT NULL DEFAULT ''")
+            }
+        }
 
         private val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {

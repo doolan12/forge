@@ -127,6 +127,14 @@ fun WorkoutScreen(wvm: WorkoutViewModel, app: AppViewModel, onClose: () -> Unit)
                     }
                 }
             }
+            if (s.workout.isNotBlank()) {
+                item {
+                    ForgeCard {
+                        Text("The session", fontWeight = FontWeight.SemiBold)
+                        Text(s.workout, fontSize = 14.sp, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
             if (s.discipline == "RUN") {
                 item {
                     ForgeCard {

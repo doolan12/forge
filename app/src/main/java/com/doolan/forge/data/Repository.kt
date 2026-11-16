@@ -172,7 +172,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     put("discipline", s.discipline); put("durationMin", s.durationMin); put("status", s.status)
                     put("notes", s.notes); put("difficulty", s.difficulty); put("startedAt", s.startedAt)
                     put("finishedAt", s.finishedAt); put("distanceKm", s.distanceKm); put("durationSec", s.durationSec)
-                    put("reason", s.reason); put("programmeId", s.programmeId)
+                    put("reason", s.reason); put("programmeId", s.programmeId); put("workout", s.workout)
                 })
             }
         })
@@ -252,7 +252,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                         o.getInt("durationMin"), o.getString("status"), o.optString("notes", ""),
                         o.optInt("difficulty", 0), o.optLong("startedAt", 0), o.optLong("finishedAt", 0),
                         o.optDouble("distanceKm", 0.0), o.optInt("durationSec", 0),
-                        o.optString("reason", ""), o.optLong("programmeId", 0)
+                        o.optString("reason", ""), o.optLong("programmeId", 0), o.optString("workout", "")
                     )
                 )
             }

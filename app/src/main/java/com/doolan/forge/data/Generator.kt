@@ -11,7 +11,9 @@ data class GenOptions(
     val daysPerWeek: Int,
     val weeks: Int,
     val startNextWeek: Boolean,
-    val avoid: Set<String>       // exercise ids the user does not want
+    val avoid: Set<String>,      // exercise ids the user does not want
+    val days: List<Int>? = null, // fixed weekday for each weekly session (1 = Monday), set by the hybrid planner
+    val legCut: Boolean? = null  // null = decide from the profile's secondary goals
 )
 
 data class GenExercise(
@@ -33,8 +35,13 @@ data class GenSession(
     val title: String,
     val reason: String,
     val minutes: Int,
-    val exercises: List<GenExercise>
+    val exercises: List<GenExercise>,
+    val discipline: String = "GYM",
+    val workout: String = ""
 )
+
+/** How hard a gym day is on the legs, used by the scheduler. 0 = none, 3 = very heavy. */
+data class DayShape(val title: String, val legs: Int)
 
 data class GenResult(val sessions: List<GenSession>, val notes: List<String>)
 
@@ -208,6 +215,43 @@ object Generator {
         )
     }
 
+
+    private fun templatesFor(strength: Boolean, split: String, n: Int): List<Day> =
+        if (strength) strengthDays(n).let { t -> (0 until n).map { t[it % t.size] } }
+        else {
+            val cycle = when (split) {
+                "Push/Pull/Legs" -> listOf(PUSH, PULL, LEGS)
+                "Upper/Lower" -> listOf(UPPER, LOWER_DAY)
+                "Full Body" -> listOf(FB_A, FB_B, FB_C)
+                else -> if (n >= 5) listOf(BRO_CHEST, BRO_BACK, LEGS, BRO_SHOULDERS, BRO_ARMS)
+                else listOf(BRO_CHEST, BRO_BACK, LEGS, BRO_SHOULDERS)
+            }
+            (0 until n).map { cycle[it % cycle.size] }
+        }
+
+    private fun legLoad(day: Day): Int {
+        val heavy = day.slots.count {
+            (it.muscle in LOWER && (it.role == "MAIN" || it.role == "LIFT")) || it.lift == "deadlift"
+        }
+        val any = day.slots.count { it.muscle in LOWER }
+        return when {
+            heavy >= 2 -> 3
+            heavy == 1 -> 2
+            any > 0 -> 1
+            else -> 0
+        }
+    }
+
+    /** The weekly pattern of gym days and how hard each is on the legs, so the scheduler can place them. */
+    fun dayShapes(goal: String, split: String, n: Int): List<DayShape> {
+        val strength = goal == "Strength"
+        val titles = templatesFor(strength, split, n)
+        return titles.mapIndexed { i, d ->
+            val t = if (d.title.isEmpty()) "Strength day ${i + 1}" else d.title
+            DayShape(t, legLoad(d))
+        }
+    }
+
     private fun liftName(key: String) = when (key) {
         "squat" -> "Squat"; "bench" -> "Bench"; "deadlift" -> "Deadlift"; else -> "Overhead press"
     }
@@ -243,26 +287,18 @@ object Generator {
         }
         // spread the sessions across the days you can train
         val chosen: List<Int> =
-            if (n == days.size) days
+            if (o.days != null && o.days.size == n) o.days
+            else if (n == days.size) days
             else (0 until n).map { i -> days[if (n == 1) 0 else Math.round(i * (days.size - 1).toFloat() / (n - 1))] }
 
         val strength = o.goal == "Strength"
-        val dayTemplates: List<Day> =
-            if (strength) strengthDays(n).let { t -> (0 until n).map { t[it % t.size] } }
-            else {
-                val cycle = when (o.split) {
-                    "Push/Pull/Legs" -> listOf(PUSH, PULL, LEGS)
-                    "Upper/Lower" -> listOf(UPPER, LOWER_DAY)
-                    "Full Body" -> listOf(FB_A, FB_B, FB_C)
-                    else -> if (n >= 5) listOf(BRO_CHEST, BRO_BACK, LEGS, BRO_SHOULDERS, BRO_ARMS)
-                    else listOf(BRO_CHEST, BRO_BACK, LEGS, BRO_SHOULDERS)
-                }
-                (0 until n).map { cycle[it % cycle.size] }
-            }
+        val dayTemplates: List<Day> = templatesFor(strength, o.split, n)
 
-        val hybrid = p.secondaryGoals.any { it == "HYROX" || it.startsWith("Marathon") } &&
-            (p.primaryGoal == "Strength" || p.primaryGoal == "Hypertrophy")
-        if (hybrid) {
+        val hybrid = o.legCut ?: (p.secondaryGoals.any { it == "HYROX" || it.startsWith("Marathon") } &&
+            (p.primaryGoal == "Strength" || p.primaryGoal == "Hypertrophy"))
+        if (hybrid && o.legCut == true) {
+            notes.add("Because you are also running or training for HYROX, gym leg volume is cut by one set per exercise to keep your legs fresh for it.")
+        } else if (hybrid) {
             notes.add("Because you also train for ${p.secondaryGoals.filter { it == "HYROX" || it.startsWith("Marathon") }.joinToString(" and ")}, leg volume is cut by one set per exercise to keep your legs fresh for it.")
         }
 
@@ -303,7 +339,7 @@ object Generator {
         }
 
         // warn about back-to-back heavy leg days
-        for (i in 1 until chosen.size) {
+        if (o.days == null) for (i in 1 until chosen.size) {
             if (chosen[i] == chosen[i - 1] + 1 && heavyLegs(resolved[i]) && heavyLegs(resolved[i - 1])) {
                 notes.add("${Calc.weekdayShort(chosen[i - 1])} and ${Calc.weekdayShort(chosen[i])} both load your legs hard. Fewer sessions or different days would help recovery.")
             }

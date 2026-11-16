@@ -50,7 +50,8 @@ data class SessionEntity(
     val distanceKm: Double = 0.0,   // runs
     val durationSec: Int = 0,       // runs: actual time
     val reason: String = "",        // why the generator scheduled this session
-    val programmeId: Long = 0       // 0 = added by hand
+    val programmeId: Long = 0,      // 0 = added by hand
+    val workout: String = ""        // written session plan (runs, HYROX), blank for gym sessions
 )
 
 @Entity(tableName = "session_exercises")
