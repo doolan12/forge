@@ -102,3 +102,16 @@ data class ProgrammeEntity(
     val weeks: Int,
     val createdAt: Long
 )
+
+@Entity(tableName = "checkins")
+data class CheckInEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val dateEpochDay: Long,
+    val sleepHours: Double,
+    val sleepQuality: Int,      // 1 poor - 5 great
+    val soreness: Int,          // 1 none - 5 very sore
+    val stress: Int,            // 1 low - 5 high
+    val energy: Int,            // 1 flat - 5 great
+    val restingHr: Int = 0,     // 0 = not logged
+    val note: String = ""
+)

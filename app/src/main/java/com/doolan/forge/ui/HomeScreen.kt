@@ -62,6 +62,9 @@ fun HomeScreen(vm: AppViewModel, openWorkout: (Long) -> Unit) {
             "${Calc.dayNameFull(today)} ${Calc.dateLabel(today)}"
         )
 
+        SectionTitle("Recovery")
+        ReadinessCard(vm, today, todays)
+
         SectionTitle("Today's training")
         if (todays.isEmpty()) {
             ForgeCard {

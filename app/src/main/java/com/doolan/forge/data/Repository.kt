@@ -15,6 +15,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
     val equipment: Flow<List<EquipmentEntity>> = db.equipment().all()
     val bodyweight: Flow<List<BodyweightEntity>> = db.bodyweight().all()
     val programmes: Flow<List<ProgrammeEntity>> = db.programmes().all()
+    val checkIns: Flow<List<CheckInEntity>> = db.checkIns().all()
 
     private val extraEquipment = listOf("Treadmill", "Resistance band", "Plyo box", "Barbell plates", "Dumbbell rack")
 
@@ -127,6 +128,36 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.bodyweight().insert(BodyweightEntity(dateEpochDay = Calc.today(), kg = kg))
     suspend fun deleteBodyweight(b: BodyweightEntity) = db.bodyweight().delete(b)
 
+    // ---------- recovery ----------
+    suspend fun saveCheckIn(c: CheckInEntity) = db.withTransaction {
+        db.checkIns().deleteForDay(c.dateEpochDay)
+        db.checkIns().insert(c)
+    }
+
+    /**
+     * Makes one session easier: one fewer set per exercise and one more rep in reserve.
+     * Runs and HYROX sessions get an easy alternative at the top. Nothing is moved to other days.
+     */
+    suspend fun easeSession(sessionId: Long) = db.withTransaction {
+        val s = db.sessions().byId(sessionId) ?: return@withTransaction
+        if (s.reason.contains("Eased on")) return@withTransaction
+        db.sessionExercises().forSession(sessionId).forEach { e ->
+            val sets = maxOf(2, e.targetSets - 1)
+            val plan = if (e.setPlan.isBlank()) "" else e.setPlan.split(";").take(sets).joinToString(";")
+            val note = (if (e.note.isBlank()) "" else e.note + " ") + "Eased after a low readiness check-in."
+            db.sessionExercises().update(e.copy(targetSets = sets, targetRir = minOf(4, e.targetRir + 1), setPlan = plan, note = note))
+        }
+        val workout = if (s.workout.isBlank()) "" else
+            "EASED after a low readiness check-in: do an easy 30 to 40 minute aerobic session at a conversational effort instead. " +
+                "If you feel much better once warmed up, you can follow the original plan below. Original plan: " + s.workout
+        db.sessions().update(
+            s.copy(
+                workout = workout,
+                reason = (if (s.reason.isBlank()) "" else s.reason + " ") + "Eased on ${Calc.dateLabel(Calc.today())} after a low readiness check-in. Nothing was added to other days."
+            )
+        )
+    }
+
     // ---------- backup ----------
     suspend fun exportJson(): String = withContext(Dispatchers.IO) {
         val root = JSONObject()
@@ -209,6 +240,15 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
                     put("id", g.id); put("name", g.name); put("goal", g.goal); put("split", g.split)
                     put("method", g.method); put("startDay", g.startDay); put("weeks", g.weeks)
                     put("createdAt", g.createdAt)
+                })
+            }
+        })
+        root.put("checkins", JSONArray().also { a ->
+            db.checkIns().allNow().forEach { c ->
+                a.put(JSONObject().apply {
+                    put("id", c.id); put("dateEpochDay", c.dateEpochDay); put("sleepHours", c.sleepHours)
+                    put("sleepQuality", c.sleepQuality); put("soreness", c.soreness); put("stress", c.stress)
+                    put("energy", c.energy); put("restingHr", c.restingHr); put("note", c.note)
                 })
             }
         })
@@ -305,6 +345,20 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
             }
         }
 
+        val checkIns = ArrayList<CheckInEntity>()
+        root.optJSONArray("checkins")?.let { a ->
+            for (i in 0 until a.length()) {
+                val o = a.getJSONObject(i)
+                checkIns.add(
+                    CheckInEntity(
+                        o.getLong("id"), o.getLong("dateEpochDay"), o.getDouble("sleepHours"),
+                        o.getInt("sleepQuality"), o.getInt("soreness"), o.getInt("stress"), o.getInt("energy"),
+                        o.optInt("restingHr", 0), o.optString("note", "")
+                    )
+                )
+            }
+        }
+
         // Everything parsed fine, so it is now safe to wipe and restore.
         db.clearAllTables()
         db.exercises().insertAll(exercises)
@@ -314,6 +368,7 @@ class Repository(private val context: Context, val db: ForgeDatabase, val store:
         db.setLogs().insertAll(logs)
         db.bodyweight().insertAll(weights)
         db.programmes().insertAll(programmes)
+        db.checkIns().insertAll(checkIns)
 
         val po = root.getJSONObject("profile")
         fun s(k: String) = po.optString(k, "")

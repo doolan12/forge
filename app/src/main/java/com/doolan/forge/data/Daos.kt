@@ -172,3 +172,21 @@ interface BodyweightDao {
     @Query("SELECT * FROM bodyweight ORDER BY dateEpochDay, id")
     suspend fun allNow(): List<BodyweightEntity>
 }
+
+@Dao
+interface CheckInDao {
+    @Insert
+    suspend fun insert(c: CheckInEntity): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(list: List<CheckInEntity>)
+
+    @Query("DELETE FROM checkins WHERE dateEpochDay = :day")
+    suspend fun deleteForDay(day: Long)
+
+    @Query("SELECT * FROM checkins ORDER BY dateEpochDay, id")
+    fun all(): Flow<List<CheckInEntity>>
+
+    @Query("SELECT * FROM checkins ORDER BY dateEpochDay, id")
+    suspend fun allNow(): List<CheckInEntity>
+}

@@ -15,9 +15,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SessionExerciseEntity::class,
         SetLogEntity::class,
         BodyweightEntity::class,
-        ProgrammeEntity::class
+        ProgrammeEntity::class,
+        CheckInEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class ForgeDatabase : RoomDatabase() {
@@ -28,12 +29,24 @@ abstract class ForgeDatabase : RoomDatabase() {
     abstract fun setLogs(): SetLogDao
     abstract fun bodyweight(): BodyweightDao
     abstract fun programmes(): ProgrammeDao
+    abstract fun checkIns(): CheckInDao
 
     companion object {
         fun build(context: Context): ForgeDatabase =
             Room.databaseBuilder(context, ForgeDatabase::class.java, "forge.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
+
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS checkins (" +
+                        "id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, dateEpochDay INTEGER NOT NULL, " +
+                        "sleepHours REAL NOT NULL, sleepQuality INTEGER NOT NULL, soreness INTEGER NOT NULL, " +
+                        "stress INTEGER NOT NULL, energy INTEGER NOT NULL, restingHr INTEGER NOT NULL, note TEXT NOT NULL)"
+                )
+            }
+        }
 
         private val MIGRATION_2_3 = object : Migration(2, 3) {
             override fun migrate(db: SupportSQLiteDatabase) {

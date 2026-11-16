@@ -3,6 +3,7 @@ package com.doolan.forge.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.doolan.forge.data.BodyweightEntity
+import com.doolan.forge.data.CheckInEntity
 import com.doolan.forge.data.EquipmentEntity
 import com.doolan.forge.data.ExerciseEntity
 import com.doolan.forge.data.GenResult
@@ -40,6 +41,17 @@ class AppViewModel(val repo: Repository) : ViewModel() {
 
     val programmes: StateFlow<List<ProgrammeEntity>> =
         repo.programmes.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val checkIns: StateFlow<List<CheckInEntity>> =
+        repo.checkIns.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    fun saveCheckIn(c: CheckInEntity) {
+        viewModelScope.launch { repo.saveCheckIn(c) }
+    }
+
+    fun easeSession(id: Long) {
+        viewModelScope.launch { repo.easeSession(id) }
+    }
 
     fun savePlan(
         name: String, goal: String, detail: String, weeks: Int,

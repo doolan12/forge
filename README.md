@@ -17,5 +17,8 @@ Open this folder, let Gradle sync, press Run.
 ## Programme builder (Stage 4)
 Build gym (hypertrophy or strength), running and HYROX plans, alone or combined. Running paces come from your own best race time (Daniels VDOT). HYROX sessions use the standard division race weights. A scheduler places heavy leg days, the long run and hard sessions apart, and gives your main focus the freshest days. Add a race date to get a taper and the event on your calendar.
 
+## Recovery (Stage 5)
+A daily check-in (sleep, soreness, stress, energy, optional resting heart rate) gives a readiness score from your own answers. On a low day you can choose to ease today's session; nothing is ever pushed onto other days. Training load compares this week with your usual.
+
 ## Not built yet
-Recovery and readiness, nutrition, AI coach, reminders, HYROX station time logging, wearable integrations.
+Nutrition and body composition, AI coach, reminders, HYROX station time logging, wearable integrations.
